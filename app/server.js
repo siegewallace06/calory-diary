@@ -23,6 +23,18 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Routes
 
+// PWA Routes
+app.get('/manifest.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+});
+
+app.get('/sw.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(__dirname, 'public', 'sw.js'));
+});
+
 // Home page - Dashboard view
 app.get('/', async (req, res) => {
     try {
