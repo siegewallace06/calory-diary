@@ -1,4 +1,4 @@
-# Calorie Diary App - User Guide
+# Calorie Diary Spreadsheet - User Guide
 
 ## What is the Calorie Diary App?
 
