@@ -1,0 +1,203 @@
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- PWA and Modern UI Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // PWA Installation
+    let deferredPrompt;
+    let installButton;
+
+    // Wait for the 'beforeinstallprompt' event
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('PWA install prompt available');
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallPromotion();
+    });
+
+    // Show install promotion
+    function showInstallPromotion() {
+        const installPrompt = document.createElement('div');
+        installPrompt.className = 'install-prompt show';
+        installPrompt.innerHTML = `
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <strong>📱 Install App</strong><br>
+        <small>Add to home screen for quick access</small>
+      </div>
+      <div class="ms-3">
+        <button class="btn btn-light btn-sm me-2" onclick="installApp()">Install</button>
+        <button class="btn btn-outline-light btn-sm" onclick="dismissInstall()">×</button>
+      </div>
+    </div>
+  `;
+        document.body.appendChild(installPrompt);
+
+        // Auto hide after 10 seconds
+        setTimeout(() => {
+            if (document.body.contains(installPrompt)) {
+                installPrompt.remove();
+            }
+        }, 10000);
+    }
+
+    // Install the PWA
+    async function installApp() {
+        if (!deferredPrompt) return;
+
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+
+        console.log('PWA install result:', result);
+        deferredPrompt = null;
+        dismissInstall();
+    }
+
+    // Dismiss install prompt
+    function dismissInstall() {
+        const prompt = document.querySelector('.install-prompt');
+        if (prompt) prompt.remove();
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('SW registered: ', registration);
+
+                // Check for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed') {
+                            if (navigator.serviceWorker.controller) {
+                                // New update available
+                                showUpdateAvailable();
+                            }
+                        }
+                    });
+                });
+            } catch (registrationError) {
+                console.log('SW registration failed: ', registrationError);
+            }
+        });
+    }
+
+    // Show update notification
+    function showUpdateAvailable() {
+        const updatePrompt = document.createElement('div');
+        updatePrompt.className = 'install-prompt show';
+        updatePrompt.style.background = '#10b981';
+        updatePrompt.innerHTML = `
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <strong>🆕 Update Available</strong><br>
+        <small>Refresh to get the latest features</small>
+      </div>
+      <div class="ms-3">
+        <button class="btn btn-light btn-sm me-2" onclick="updateApp()">Update</button>
+        <button class="btn btn-outline-light btn-sm" onclick="dismissUpdate()">Later</button>
+      </div>
+    </div>
+  `;
+        document.body.appendChild(updatePrompt);
+    }
+
+    // Update the app
+    function updateApp() {
+        window.location.reload();
+    }
+
+    // Dismiss update prompt
+    function dismissUpdate() {
+        const prompt = document.querySelector('.install-prompt');
+        if (prompt) prompt.remove();
+    }
+
+    // Enhanced refresh with loading state
+    function refreshData() {
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner me-2"></span>Refreshing...';
+        btn.disabled = true;
+
+        fetch('/api/refresh', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success feedback
+                    showToast('Data refreshed successfully!', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Refresh failed: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showToast('Refresh failed: ' + error.message, 'error');
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+    }
+
+    // Toast notifications
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+    <div class="d-flex align-items-center justify-content-between">
+      <span>${message}</span>
+      <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>
+  `;
+
+        document.body.appendChild(toast);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                toast.remove();
+            }
+        }, 5000);
+    }
+
+    // Smooth animations on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add fade-in animation to cards
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+            card.classList.add('fade-in');
+        });
+
+        // Initialize tooltips if available
+        if (window.bootstrap && bootstrap.Tooltip) {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+    });
+
+    // Offline handling
+    window.addEventListener('online', () => {
+        showToast('You are back online!', 'success');
+    });
+
+    window.addEventListener('offline', () => {
+        showToast('You are offline. Changes will sync when reconnected.', 'info');
+    });
+
+    // Prevent zoom on mobile form inputs
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+    }
+</script>
