@@ -1,8 +1,6 @@
-version: "3.8"
-
 services:
   calorie-diary-web:
-    build: .
+    build: ./app
     container_name: calorie-diary-app
     ports:
       - "3000:3000"
@@ -10,10 +8,10 @@ services:
       - NODE_ENV=production
       - PORT=3000
     env_file:
-      - .env
+      - ./app/.env
     volumes:
       # Mount credentials directory for Google service account
-      - ./credentials:/app/credentials:ro
+      - ./app/credentials:/app/credentials:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]

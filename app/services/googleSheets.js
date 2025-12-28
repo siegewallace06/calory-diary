@@ -34,6 +34,8 @@ class GoogleSheetsService {
                 });
             }
 
+            this.sheets = google.sheets({ version: 'v4', auth: this.auth });
+
             console.log('Google Sheets API initialized successfully');
         } catch (error) {
             console.error('Error initializing Google Sheets API:', error.message);
