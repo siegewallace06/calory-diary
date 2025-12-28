@@ -40,9 +40,9 @@ Your BMR is then multiplied by an activity factor to get your total daily calori
 
 #### Goal Adjustment
 Finally, a goal offset is applied:
-- **-500 calories** for weight loss (1 lb/week)
+- **-500 calories** for weight loss (0.5 kg/week)
 - **0 calories** for maintenance
-- **+500 calories** for weight gain (1 lb/week)
+- **+500 calories** for weight gain (0.5 kg/week)
 
 **Final Formula:**
 ```

@@ -70,9 +70,9 @@ Multiplies BMR by your activity factor:
 
 ### 3. Goal Adjustment
 Applies your objective:
-- **Weight Loss**: -500 calories (≈1 lb/week)
+- **Weight Loss**: -500 calories (≈0.5 kg/week)
 - **Maintenance**: 0 calories
-- **Weight Gain**: +500 calories (≈1 lb/week)
+- **Weight Gain**: +500 calories (≈0.5 kg/week)
 
 ## 📊 Example Usage
 

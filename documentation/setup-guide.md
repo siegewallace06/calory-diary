@@ -102,9 +102,9 @@ Your spreadsheet needs exactly three sheets with these names:
    - **Extremely Active**: Very hard exercise + physical job
 
 4. **Goal Guide**:
-   - **Weight Loss**: -500 calories (lose ~1 lb/week)
+   - **Weight Loss**: -500 calories (lose ~0.5 kg/week)
    - **Maintenance**: 0 calories (maintain current weight)
-   - **Weight Gain**: +500 calories (gain ~1 lb/week)
+   - **Weight Gain**: +500 calories (gain ~0.5 kg/week)
 
 ### Step 7: Test with Sample Data (Optional)
 
