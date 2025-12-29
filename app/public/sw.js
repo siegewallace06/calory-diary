@@ -1,13 +1,11 @@
-const CACHE_NAME = 'calorie-diary-v1.0.0';
-const STATIC_CACHE = 'calorie-diary-static-v1.0.0';
-const DYNAMIC_CACHE = 'calorie-diary-dynamic-v1.0.0';
+const CACHE_NAME = 'calorie-diary-v1.0.1';
+const STATIC_CACHE = 'calorie-diary-static-v1.0.1';
+const DYNAMIC_CACHE = 'calorie-diary-dynamic-v1.0.1';
 
-// Assets to cache on install
+// Assets to cache on install (ONLY truly static assets)
 const STATIC_ASSETS = [
-    '/',
-    '/log',
-    '/summary',
-    '/settings',
+    // Remove dynamic pages from static cache - they need fresh data!
+    // '/', '/log', '/summary', '/settings', - REMOVED
     '/css/style.css',
     '/manifest.json',
     '/icons/icon-192x192.png',
@@ -19,6 +17,9 @@ const STATIC_ASSETS = [
     'https://cdn.jsdelivr.net/npm/chart.js',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
+
+// Pages that need fresh data (network-first strategy)
+const DYNAMIC_PAGES = ['/', '/log', '/summary', '/settings'];
 
 // Install event - cache static assets
 self.addEventListener('install', event => {
@@ -58,7 +59,7 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// Fetch event - serve from cache with network fallback
+// Fetch event - network-first for dynamic pages, cache-first for static assets
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
@@ -73,6 +74,42 @@ self.addEventListener('fetch', event => {
         return;
     }
 
+    // API requests - always fetch fresh (no caching)
+    if (url.pathname.startsWith('/api/')) {
+        event.respondWith(fetch(request));
+        return;
+    }
+
+    // Dynamic pages - Network First strategy (always try network first)
+    if (DYNAMIC_PAGES.includes(url.pathname) || url.pathname === '/') {
+        event.respondWith(
+            fetch(request)
+                .then(networkResponse => {
+                    console.log('Network first - serving fresh:', request.url);
+                    // Don't cache dynamic pages to ensure fresh data
+                    return networkResponse;
+                })
+                .catch(error => {
+                    console.log('Network failed, trying cache:', request.url);
+                    // If network fails, try cache as fallback
+                    return caches.match(request)
+                        .then(cachedResponse => {
+                            if (cachedResponse) {
+                                console.log('Serving stale cache (offline):', request.url);
+                                return cachedResponse;
+                            }
+                            // No cache available, show offline page
+                            return new Response(
+                                '<h1>Offline</h1><p>Please check your internet connection.</p>',
+                                { headers: { 'Content-Type': 'text/html' } }
+                            );
+                        });
+                })
+        );
+        return;
+    }
+
+    // Static assets - Cache First strategy
     event.respondWith(
         caches.match(request)
             .then(cachedResponse => {
@@ -86,39 +123,20 @@ self.addEventListener('fetch', event => {
                     .then(networkResponse => {
                         // Only cache successful responses
                         if (networkResponse.status === 200) {
-                            // Determine which cache to use
-                            let cacheName = DYNAMIC_CACHE;
-
-                            // Cache API responses separately
-                            if (url.pathname.startsWith('/api/')) {
-                                // Don't cache API responses for real-time data
-                                return networkResponse;
+                            // Cache static assets only
+                            if (STATIC_ASSETS.includes(url.pathname) ||
+                                url.origin !== location.origin) {
+                                const responseClone = networkResponse.clone();
+                                caches.open(STATIC_CACHE)
+                                    .then(cache => {
+                                        cache.put(request, responseClone);
+                                    });
                             }
-
-                            // Cache static assets in static cache
-                            if (STATIC_ASSETS.includes(url.pathname)) {
-                                cacheName = STATIC_CACHE;
-                            }
-
-                            // Clone the response before caching
-                            const responseClone = networkResponse.clone();
-                            caches.open(cacheName)
-                                .then(cache => {
-                                    cache.put(request, responseClone);
-                                });
                         }
-
                         return networkResponse;
                     })
                     .catch(error => {
                         console.error('Network fetch failed:', error);
-
-                        // Serve offline fallback for pages
-                        if (request.destination === 'document') {
-                            return caches.match('/');
-                        }
-
-                        // For other resources, just fail
                         throw error;
                     });
             })
