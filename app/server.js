@@ -21,6 +21,17 @@ app.use(express.static('public'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware to disable caching for dynamic content
+// Source - https://stackoverflow.com/a/40277517
+// Posted by XCEPTION
+// Retrieved 2025-12-29, License - CC BY-SA 3.0
+const disableCache = (req, res, next) => {
+    res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.header('Expires', '-1');
+    res.header('Pragma', 'no-cache');
+    next();
+};
+
 // Routes
 
 // PWA Routes
@@ -36,7 +47,7 @@ app.get('/sw.js', (req, res) => {
 });
 
 // Home page - Dashboard view
-app.get('/', async (req, res) => {
+app.get('/', disableCache, async (req, res) => {
     try {
         const dashboard = await sheetsService.getDashboardData();
         const recentEntries = await sheetsService.getLogEntries(5);
@@ -56,7 +67,7 @@ app.get('/', async (req, res) => {
 });
 
 // Log entry form page
-app.get('/log', (req, res) => {
+app.get('/log', disableCache, (req, res) => {
     res.render('log', { error: null, success: null });
 });
 
@@ -80,7 +91,7 @@ app.post('/api/log', async (req, res) => {
 });
 
 // Get recent log entries
-app.get('/api/log', async (req, res) => {
+app.get('/api/log', disableCache, async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
         const entries = await sheetsService.getLogEntries(limit);
@@ -91,7 +102,7 @@ app.get('/api/log', async (req, res) => {
 });
 
 // Daily summary page
-app.get('/summary', async (req, res) => {
+app.get('/summary', disableCache, async (req, res) => {
     try {
         const summaries = await sheetsService.getDailySummary(30);
         res.render('summary', { summaries, error: null });
@@ -101,7 +112,7 @@ app.get('/summary', async (req, res) => {
 });
 
 // Get daily summary data
-app.get('/api/summary', async (req, res) => {
+app.get('/api/summary', disableCache, async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 30;
         const summaries = await sheetsService.getDailySummary(limit);
@@ -110,9 +121,84 @@ app.get('/api/summary', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+// Get calendar data for journal (monthly view)
+app.get('/api/journal/calendar', disableCache, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month); // 0-11
 
+        // Get daily summaries for the entire month
+        const summaries = await sheetsService.getDailySummary(365); // Get more data to cover the month
+
+        // Filter and format for calendar
+        const calendarData = {};
+        summaries.forEach(summary => {
+            const date = new Date(summary.date);
+            if (month !== undefined) {
+                if (date.getFullYear() === year && date.getMonth() === month) {
+                    const day = date.getDate();
+                    calendarData[day] = {
+                        totalCalories: summary.totalIn,
+                        maxCalories: summary.maxLimit,
+                        status: summary.status,
+                        isOver: summary.totalIn > summary.maxLimit
+                    };
+                }
+            } else {
+                // Return all data if no month specified
+                const dateKey = date.toISOString().split('T')[0];
+                calendarData[dateKey] = {
+                    totalCalories: summary.totalIn,
+                    maxCalories: summary.maxLimit,
+                    status: summary.status,
+                    isOver: summary.totalIn > summary.maxLimit
+                };
+            }
+        });
+
+        res.json({ success: true, data: calendarData });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get detailed entries for a specific date
+app.get('/api/journal/date/:date', disableCache, async (req, res) => {
+    try {
+        const targetDate = req.params.date; // YYYY-MM-DD format
+
+        // Get all log entries
+        const allEntries = await sheetsService.getLogEntries(1000);
+
+        // Filter entries for the specific date
+        const dateEntries = allEntries.filter(entry => {
+            const entryDate = new Date(entry.date);
+            const targetDateObj = new Date(targetDate);
+            return entryDate.toDateString() === targetDateObj.toDateString();
+        });
+
+        // Get daily summary for this date
+        const summaries = await sheetsService.getDailySummary(365);
+        const dateSummary = summaries.find(summary => {
+            const summaryDate = new Date(summary.date);
+            const targetDateObj = new Date(targetDate);
+            return summaryDate.toDateString() === targetDateObj.toDateString();
+        });
+
+        res.json({
+            success: true,
+            data: {
+                entries: dateEntries,
+                summary: dateSummary || null,
+                date: targetDate
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 // Get dashboard data
-app.get('/api/dashboard', async (req, res) => {
+app.get('/api/dashboard', disableCache, async (req, res) => {
     try {
         const dashboard = await sheetsService.getDashboardData();
         res.json({ success: true, data: dashboard });
@@ -122,7 +208,7 @@ app.get('/api/dashboard', async (req, res) => {
 });
 
 // Settings page
-app.get('/settings', async (req, res) => {
+app.get('/settings', disableCache, async (req, res) => {
     try {
         const dashboard = await sheetsService.getDashboardData();
         res.render('settings', {
@@ -138,7 +224,25 @@ app.get('/settings', async (req, res) => {
         });
     }
 });
+// Journal page
+app.get('/journal', disableCache, async (req, res) => {
+    try {
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
 
+        res.render('journal', {
+            currentMonth,
+            currentYear,
+            error: null
+        });
+    } catch (error) {
+        res.render('journal', {
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
+            error: error.message
+        });
+    }
+});
 // Update personal metrics
 app.post('/api/settings', async (req, res) => {
     try {
