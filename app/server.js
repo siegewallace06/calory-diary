@@ -160,6 +160,17 @@ app.post('/api/refresh', async (req, res) => {
     }
 });
 
+// Update dashboard to today's date
+app.post('/api/update-dashboard-date', async (req, res) => {
+    try {
+        const result = await sheetsService.updateDashboardDate();
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('Error updating dashboard date:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Health check
 app.get('/health', (req, res) => {
     res.json({

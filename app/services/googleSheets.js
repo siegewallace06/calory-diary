@@ -54,6 +54,14 @@ class GoogleSheetsService {
                 resource: { values }
             });
 
+            // Trigger calculation refresh after adding entry (API calls don't trigger onEdit)
+            try {
+                await this.refreshCalculations();
+                console.log('Log entry added and calculations refreshed successfully');
+            } catch (refreshError) {
+                console.log('Log entry added but calculation refresh failed:', refreshError.message);
+            }
+
             return response.data;
         } catch (error) {
             console.error('Error adding log entry:', error.message);
@@ -172,6 +180,14 @@ class GoogleSheetsService {
                 resource: { values }
             });
 
+            // Trigger calculation refresh after updating metrics (API calls don't trigger onEdit)
+            try {
+                await this.refreshCalculations();
+                console.log('Personal metrics updated and calculations refreshed successfully');
+            } catch (refreshError) {
+                console.log('Personal metrics updated but calculation refresh failed:', refreshError.message);
+            }
+
             return response.data;
         } catch (error) {
             console.error('Error updating personal metrics:', error.message);
@@ -180,12 +196,62 @@ class GoogleSheetsService {
     }
 
     async refreshCalculations() {
+        // Manual refresh - update a dummy cell to trigger onEdit
         try {
-            // This would trigger the Google Apps Script refresh function
-            // For now, we'll just return success as the script handles this automatically
-            return { success: true, message: 'Calculations will be updated automatically' };
+            const timestamp = new Date().getTime();
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range: `${process.env.LOG_SHEET_NAME}!F1`, // Use an unused cell
+                valueInputOption: 'USER_ENTERED',
+                resource: { values: [[`Refresh ${timestamp}`]] }
+            });
+
+            // Clear the dummy cell
+            await this.sheets.spreadsheets.values.clear({
+                spreadsheetId: this.spreadsheetId,
+                range: `${process.env.LOG_SHEET_NAME}!F1`
+            });
+
+            return { success: true, message: 'Manual refresh triggered via onEdit' };
         } catch (error) {
-            console.error('Error refreshing calculations:', error.message);
+            console.error('Error triggering manual refresh:', error.message);
+            throw error;
+        }
+    }
+
+    async updateDashboardDate() {
+        try {
+            // Update A2 in Dashboard sheet directly to today's date
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range: `${process.env.DASHBOARD_SHEET_NAME}!A2`, // Today's date cell
+                valueInputOption: 'USER_ENTERED',
+                resource: { values: [[todayString]] }
+            });
+
+            console.log(`Dashboard date updated to: ${todayString}`);
+
+            // Then trigger onEdit to refresh calculations
+            const timestamp = new Date().getTime();
+            await this.sheets.spreadsheets.values.update({
+                spreadsheetId: this.spreadsheetId,
+                range: `${process.env.LOG_SHEET_NAME}!F1`, // Use an unused cell
+                valueInputOption: 'USER_ENTERED',
+                resource: { values: [[`Refresh ${timestamp}`]] }
+            });
+
+            // Clear the dummy cell
+            await this.sheets.spreadsheets.values.clear({
+                spreadsheetId: this.spreadsheetId,
+                range: `${process.env.LOG_SHEET_NAME}!F1`
+            });
+
+            return { success: true, message: `Dashboard date updated to ${todayString}` };
+        } catch (error) {
+            console.error('Error updating dashboard date:', error.message);
             throw error;
         }
     }

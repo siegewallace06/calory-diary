@@ -60,9 +60,8 @@
                                         <i class="fas fa-calendar-day"></i>
                                     </div>
                                     <div class="stat-value">Today</div>
-                                    <div class="stat-label">
-                                        <%= new Date(dashboard.today.date).toLocaleDateString('en-US', { month: 'short'
-                                            , day: 'numeric' }) %>
+                                    <div class="stat-label" id="current-date">
+                                        Loading...
                                     </div>
                                 </div>
                             </div>
@@ -366,20 +365,73 @@
         <%- include('partials/scripts') %>
 
             <script>
-                // Auto-refresh every 5 minutes
-                setInterval(() => {
-                    fetch('/api/dashboard')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Optionally update specific elements without full reload
-                                console.log('Dashboard data updated');
+                // Update current date on client-side to avoid cache issues
+                document.getElementById('current-date').textContent =
+                    new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                // Check if dashboard data is from today and update if not
+                async function checkDashboardDate() {
+                    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+                    const dashboardDate = '<%= dashboard ? new Date(dashboard.today.date).toLocaleDateString("en-CA") : "" %>';
+
+                    if (dashboardDate && dashboardDate !== today) {
+                        console.log(`Dashboard showing data from ${dashboardDate}, updating to today (${today})`);
+
+                        // Show updating message
+                        const progressTitle = document.querySelector('.card-title');
+                        if (progressTitle && progressTitle.textContent.includes("Today's Progress")) {
+                            progressTitle.innerHTML = `
+                                <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                Today's Progress 
+                                <small class="text-info ms-2">
+                                    <i class="fas fa-sync fa-spin me-1"></i>
+                                    Updating to today's date...
+                                </small>
+                            `;
+                        }
+
+                        try {
+                            // Call API to update dashboard date
+                            const response = await fetch('/api/update-dashboard-date', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+
+                            if (response.ok) {
+                                console.log('Dashboard date updated successfully');
+                                // Reload page after a short delay to show updated data
+                                setTimeout(() => window.location.reload(), 1500);
+                            } else {
+                                console.error('Failed to update dashboard date');
+                                // Show error message
+                                if (progressTitle) {
+                                    progressTitle.innerHTML = `
+                                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                                        Today's Progress 
+                                        <small class="text-warning ms-2">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Showing data from ${new Date(dashboardDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                        </small>
+                                    `;
+                                }
                             }
-                        })
-                        .catch(error => {
-                            console.log('Auto-refresh failed:', error);
-                        });
-                }, 300000);
+                        } catch (error) {
+                            console.error('Error updating dashboard date:', error);
+                        }
+                    } else {
+                        console.log('Dashboard data is current for today');
+                    }
+                }
+
+                // Run date validation on page load
+                checkDashboardDate();
+
+                // Auto-refresh every 5 minutes to get latest data from spreadsheet
+                setInterval(() => {
+                    window.location.reload();
+                }, 300000); // 5 minutes
+
+                console.log('Dashboard loaded - Google Apps Script onEdit trigger handles all calculations automatically');
             </script>
 </body>
 
