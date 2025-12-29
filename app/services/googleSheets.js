@@ -196,25 +196,44 @@ class GoogleSheetsService {
     }
 
     async refreshCalculations() {
-        // Manual refresh - update a dummy cell to trigger onEdit
         try {
-            const timestamp = new Date().getTime();
-            await this.sheets.spreadsheets.values.update({
-                spreadsheetId: this.spreadsheetId,
-                range: `${process.env.LOG_SHEET_NAME}!F1`, // Use an unused cell
-                valueInputOption: 'USER_ENTERED',
-                resource: { values: [[`Refresh ${timestamp}`]] }
-            });
+            // Call the deployed Google Apps Script web app to trigger refresh
+            const webAppUrl = process.env.GOOGLE_SCRIPT_WEB_APP_URL;
 
-            // Clear the dummy cell
-            await this.sheets.spreadsheets.values.clear({
-                spreadsheetId: this.spreadsheetId,
-                range: `${process.env.LOG_SHEET_NAME}!F1`
-            });
+            if (webAppUrl) {
+                // Use the web app URL to trigger refresh
+                console.log('Triggering calculations via Google Apps Script web app...');
+                const response = await fetch(`${webAppUrl}?action=refresh`);
+                const result = await response.json();
 
-            return { success: true, message: 'Manual refresh triggered via onEdit' };
+                if (result.success) {
+                    console.log('Google Apps Script refresh triggered successfully via web app');
+                    return { success: true, message: 'Calculations refreshed via web app' };
+                } else {
+                    console.log('Google Apps Script refresh failed:', result.error);
+                    throw new Error(result.error);
+                }
+            } else {
+                // Fallback to dummy cell method if web app URL not configured
+                console.log('GOOGLE_SCRIPT_WEB_APP_URL not configured, using dummy cell fallback');
+                const timestamp = new Date().getTime();
+                await this.sheets.spreadsheets.values.update({
+                    spreadsheetId: this.spreadsheetId,
+                    range: `${process.env.LOG_SHEET_NAME}!F1`, // Use an unused cell
+                    valueInputOption: 'USER_ENTERED',
+                    resource: { values: [[`Refresh ${timestamp}`]] }
+                });
+
+                // Clear the dummy cell
+                await this.sheets.spreadsheets.values.clear({
+                    spreadsheetId: this.spreadsheetId,
+                    range: `${process.env.LOG_SHEET_NAME}!F1`
+                });
+
+                return { success: true, message: 'Manual refresh triggered via dummy cell' };
+            }
         } catch (error) {
-            console.error('Error triggering manual refresh:', error.message);
+            console.error('Error refreshing calculations:', error.message);
             throw error;
         }
     }

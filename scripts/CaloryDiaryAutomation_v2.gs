@@ -31,6 +31,9 @@ function onOpen() {
     .addItem('Set Today\'s Date', 'setTodaysDate')
     .addItem('Add Sample Data', 'addSampleData')
     .addToUi();
+  
+  // Trigger Refresh Calory Diary on open
+  refreshCaloryDiary(); 
 }
 
 const LOG_COLUMNS = {
@@ -163,6 +166,8 @@ function computeDailyTotalsFromLog(spreadsheet) {
     if (logData.length <= 1) {
       Logger.log('No data entries found in Log sheet');
       return 
+
+
 {};
     }
     
@@ -593,5 +598,79 @@ function addSampleData() {
     refreshCaloryDiary();
     
     SpreadsheetApp.getUi().alert('Sample data added successfully!\\nCheck your Daily Summary sheet and Dashboard to see the calculations.');
+  }
+}
+
+/**
+ * Web App endpoint - Deploy as web app to trigger functions via URL
+ * 
+ * Usage examples:
+ * - https://script.google.com/.../exec?action=refresh
+ * - https://script.google.com/.../exec?action=setTodaysDate
+ * - https://script.google.com/.../exec (defaults to refresh)
+ */
+function doGet(e) {
+  try {
+    const action = e.parameter.action || 'refresh';
+    
+    switch (action.toLowerCase()) {
+      case 'refresh':
+      case 'refreshcalories':
+      case 'refreshcalorydiary':
+        refreshCaloryDiary();
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: true,
+            message: 'Calory diary refreshed successfully',
+            timestamp: new Date().toISOString(),
+            action: 'refresh'
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+          
+      case 'settodaysdate':
+      case 'updatedate':
+        setTodaysDate();
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: true,
+            message: 'Dashboard updated with today\'s date',
+            timestamp: new Date().toISOString(),
+            action: 'setTodaysDate'
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+          
+      case 'status':
+      case 'health':
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: true,
+            message: 'Calory Diary automation is running',
+            timestamp: new Date().toISOString(),
+            version: '2.0',
+            action: 'status'
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+          
+      default:
+        return ContentService
+          .createTextOutput(JSON.stringify({
+            success: false,
+            error: `Unknown action: ${action}`,
+            availableActions: ['refresh', 'setTodaysDate', 'status'],
+            timestamp: new Date().toISOString()
+          }))
+          .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+  } catch (error) {
+    Logger.log(`Error in doGet: ${error.toString()}`);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        success: false,
+        error: error.toString(),
+        timestamp: new Date().toISOString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
