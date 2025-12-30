@@ -1,149 +1,353 @@
-# Calorie Diary Automation
+# 🍎 Calorie Diary - Smart Nutrition Tracking Web Application
 
-An intelligent Google Sheets-based calorie tracking system with automated calculations, goal monitoring, and personalized recommendations.
+A modern, full-featured Progressive Web Application (PWA) for intelligent calorie tracking that combines the power of Google Sheets data management with a beautiful, responsive web interface. Track your nutrition scientifically with real-time calculations, offline capabilities, and mobile-optimized design.
 
-## 🍎 What This Does
+## 🌟 Key Features
 
-Transform any Google Sheet into a powerful calorie tracking dashboard that:
-- **Automatically calculates** your daily calorie needs using scientific formulas
-- **Tracks your intake** with simple food logging
-- **Provides real-time feedback** on your progress toward daily goals
-- **Maintains historical records** for trend analysis
-- **Updates everything automatically** as you log meals
+### 📊 Smart Web Dashboard
+- **Real-time Progress Tracking**: Live calorie consumption vs. daily goals
+- **Interactive Calendar Journal**: Monthly view with daily nutrition breakdowns
+- **Responsive Design**: Perfect on desktop, tablet, and mobile devices
+- **Progressive Web App**: Install on your device for native app experience
+- **Offline Capabilities**: View cached data and sync when connection returns
 
-## ✨ Key Features
+### 🧮 Scientific Calculations
+- **Mifflin-St Jeor Equation**: Gold-standard BMR calculation accuracy
+- **Personalized Daily Goals**: Based on your metrics, activity level, and goals
+- **Real-time Updates**: Instant recalculation as you log food or update settings
+- **Goal Flexibility**: Weight loss (-500 cal), maintenance, or weight gain (+500 cal)
 
-- 🧮 **Smart Calculations**: Uses Mifflin-St Jeor equation for accurate BMR/TDEE
-- 🎯 **Goal Tracking**: Visual progress indicators (green = under goal, red = over)
-- 📊 **Three-Sheet System**: Log entries, Dashboard view, Historical summary
-- 🔄 **Auto-Updates**: Real-time recalculation as you add food entries
-- 📱 **User-Friendly**: Dropdown menus and guided input validation
-- 🏃‍♂️ **Activity-Aware**: Adjusts for your activity level and goals
-- 📈 **Historical Analysis**: Track trends and patterns over time
+### 🍽️ Comprehensive Food Logging
+- **Intuitive Web Interface**: Easy food entry with smart forms
+- **Meal Categorization**: Breakfast, lunch, dinner, snacks, and drinks
+- **Daily Summaries**: Automatic calculation of total calories consumed
+- **Historical Tracking**: Complete nutrition history with search and filtering
+- **Mobile-Optimized**: Touch-friendly interface for on-the-go logging
+
+### ☁️ Google Sheets Integration
+- **Seamless Data Sync**: Real-time synchronization with Google Sheets
+- **Automatic Backup**: Your data is safely stored in Google Drive
+- **Collaborative Access**: Share with nutritionist, trainer, or family members
+- **Data Ownership**: Your data stays in your Google account
+- **Export Ready**: Download data anytime in multiple formats
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Client PWA    │────│  Express Server │────│  Google Sheets  │
+│   (Frontend)    │    │   (Backend)     │    │   (Database)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+    ┌─────────┐              ┌─────────┐          ┌─────────────┐
+    │Service  │              │ Google  │          │ Apps Script │
+    │Worker   │              │Sheets   │          │ (Triggers)  │
+    │(Cache)  │              │API      │          │             │
+    └─────────┘              └─────────┘          └─────────────┘
+```
+
+### Technology Stack
+- **Frontend**: Bootstrap 5, EJS Templates, Progressive Web App
+- **Backend**: Node.js, Express.js, Google Sheets API v4
+- **Database**: Google Sheets with Apps Script automation
+- **Deployment**: Docker, Docker Compose, Cloud-ready
+- **Mobile**: PWA with service worker for offline support
 
 ## 🚀 Quick Start
 
-1. **Create a Google Sheet** with three sheets: `Log`, `Dashboard`, `Daily Summary`
-2. **Install the script** from `scripts/CaloryDiaryAutomation_v2.gs`
-3. **Run "Initialize All"** from the Calory Diary menu
-4. **Enter your personal metrics** (weight, height, age, activity level, goal)
-5. **Start logging food** in the Log sheet
-6. **Watch your progress** update automatically in Dashboard
+### Option 1: Docker Deployment (Recommended)
 
-**Need detailed setup instructions?** See [Setup Guide](documentation/setup-guide.md)
+```bash
+# Clone the repository
+git clone https://github.com/your-username/calorie-diary.git
+cd calorie-diary
 
-## 📁 Repository Structure
+# Configure environment
+cp .env.example .env
+# Edit .env with your Google Cloud and Sheets configuration
+
+# Deploy with Docker
+docker-compose up -d
+
+# Access at http://localhost:3000
+```
+
+### Option 2: Local Development
+
+```bash
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Add your Google Cloud service account credentials
+
+# Start development server
+npm run dev
+
+# Access at http://localhost:3000
+```
+
+### Option 3: Cloud Deployment
+
+Deploy to your preferred cloud platform:
+- **Google Cloud Run**: `gcloud run deploy`
+- **Heroku**: `git push heroku main`
+- **DigitalOcean**: App Platform deployment
+- **AWS**: Elastic Beanstalk or ECS
+
+See [Deployment Guide](documentation/deployment-guide.md) for detailed instructions.
+
+## 📋 Setup Requirements
+
+### Google Cloud Configuration
+
+1. **Create Service Account**:
+   ```bash
+   # In Google Cloud Console
+   # IAM & Admin > Service Accounts > Create Service Account
+   # Download JSON key file
+   ```
+
+2. **Enable APIs**:
+   ```bash
+   gcloud services enable sheets.googleapis.com
+   gcloud services enable script.googleapis.com
+   ```
+
+3. **Configure Environment Variables**:
+   ```bash
+   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+   GOOGLE_CLIENT_EMAIL="service-account@project.iam.gserviceaccount.com"
+   GOOGLE_SHEET_ID="1ABC123DEF456GHI789"
+   GOOGLE_SCRIPT_WEB_APP_URL="https://script.google.com/macros/s/.../exec"
+   ```
+
+### Google Sheets Setup
+
+1. **Create Spreadsheet**: New Google Sheets document
+2. **Share with Service Account**: Add service account email as Editor
+3. **Deploy Apps Script**: Use `CaloryDiaryAutomation_v2.gs` for automation
+4. **Configure Web App**: Deploy Apps Script as web app for calculations
+
+## 💻 Application Interface
+
+### 🏠 Dashboard
+- **Today's Progress**: Calories consumed vs. daily goal
+- **Visual Progress Bar**: Instant feedback on goal achievement
+- **Personal Metrics Panel**: Current settings and calculated targets
+- **Recent Entries**: Last 5 food logs with quick access
+- **Quick Actions**: Add entry, refresh data, view journal
+
+### 📚 Interactive Journal
+- **Monthly Calendar**: Bird's-eye view of nutrition patterns
+- **Color-Coded Days**: Green (under goal) vs. Red (over goal)
+- **Daily Detail Modal**: Complete food list for any day
+- **Navigation Controls**: Previous/next month, jump to today
+- **Responsive Grid**: Works perfectly on all screen sizes
+
+### 📝 Food Entry System
+- **Smart Forms**: Intuitive food logging interface
+- **Meal Type Selection**: Breakfast, lunch, dinner, snack, drink
+- **Date/Time Tracking**: When and what you ate
+- **Instant Validation**: Real-time form validation and feedback
+- **Mobile Optimized**: Touch-friendly for on-the-go logging
+
+### ⚙️ Settings Management
+- **Personal Metrics**: Weight, height, age, gender, activity level
+- **Goal Selection**: Weight loss, maintenance, or weight gain
+- **Real-time Preview**: See how changes affect your daily calorie target
+- **Data Validation**: Ensures all inputs are valid and realistic
+
+## 📱 Progressive Web App Features
+
+### Mobile Experience
+- **Install Prompt**: Add to home screen on mobile devices
+- **Offline Support**: View cached data without internet
+- **Background Sync**: Sync data when connection returns
+- **Native Feel**: App-like experience with smooth transitions
+
+### Performance Optimizations
+- **Service Worker Caching**: Fast loading of static assets
+- **Network-First Strategy**: Always fresh data for nutrition tracking
+- **Lazy Loading**: Efficient loading of calendar data
+- **Compression**: Optimized asset delivery
+
+## 📊 Scientific Foundation
+
+### BMR Calculation (Mifflin-St Jeor Equation)
+- **Men**: BMR = (10 × weight kg) + (6.25 × height cm) - (5 × age) + 5
+- **Women**: BMR = (10 × weight kg) + (6.25 × height cm) - (5 × age) - 161
+
+### TDEE and Goal Calculation
+- **TDEE**: BMR × Activity Factor (1.2 - 1.9)
+- **Weight Loss**: TDEE - 500 calories (≈0.5kg/week)
+- **Maintenance**: TDEE exactly
+- **Weight Gain**: TDEE + 500 calories (≈0.5kg/week)
+
+### Activity Level Multipliers
+- **1.2**: Sedentary (desk job, minimal exercise)
+- **1.375**: Light (light exercise 1-3 days/week)
+- **1.55**: Moderate (moderate exercise 3-5 days/week)
+- **1.725**: Very Active (intense exercise 6-7 days/week)
+- **1.9**: Extremely Active (very intense exercise, physical job)
+
+## 📁 Project Structure
 
 ```
 calory-diary/
-├── scripts/
-│   ├── CaloryDiaryAutomation_v1.gs    # Legacy version
-│   └── CaloryDiaryAutomation_v2.gs    # Current version ⭐
-├── documentation/
-│   ├── app-explanation.md              # How the app works
-│   ├── technical-documentation.md      # Developer guide
-│   └── setup-guide.md                 # Step-by-step setup
-├── templates/                          # (Future: Pre-configured sheets)
-└── README.md                          # This file
+├── documentation/                 # Comprehensive guides
+│   ├── user-guide.md             # End-user documentation
+│   ├── technical-architecture.md # System architecture
+│   ├── deployment-guide.md       # Deployment instructions
+│   └── troubleshooting.md        # Issue resolution
+├── scripts/                      # Google Apps Script
+│   ├── CaloryDiaryAutomation_v1.gs
+│   └── CaloryDiaryAutomation_v2.gs # Current version
+├── src/                          # Application source
+│   ├── services/                 # Business logic
+│   ├── controllers/              # Route handlers
+│   └── middleware/               # Express middleware
+├── public/                       # Static assets
+│   ├── css/                      # Stylesheets
+│   ├── js/                       # Client-side JavaScript
+│   ├── icons/                    # PWA icons
+│   └── manifest.json             # PWA manifest
+├── views/                        # EJS templates
+│   ├── pages/                    # Main pages
+│   └── components/               # Reusable components
+├── docker-compose.yml            # Container orchestration
+├── Dockerfile                    # Container definition
+└── server.js                     # Application entry point
+```
+
+## 🎯 API Endpoints
+
+### Core Data APIs
+```javascript
+GET  /api/personal-metrics        // User settings
+PUT  /api/personal-metrics        // Update settings
+GET  /api/food-entries           // Food logs (filterable)
+POST /api/food-entries           // Add new entry
+GET  /api/journal/calendar       // Monthly calendar data
+GET  /api/journal/date/:date     // Daily entries
+POST /api/refresh                // Trigger calculations
+```
+
+### Web Interface Routes
+```javascript
+GET  /                           // Dashboard
+GET  /journal                    // Calendar interface
+GET  /log                        // Food entry form
+GET  /summary                    // Historical data
+GET  /settings                   // Personal metrics
+```
+
+## 🛠️ Development Workflow
+
+### Local Development
+```bash
+# Start development server with hot reload
+npm run dev
+
+# Run tests
+npm test
+
+# Check code quality
+npm run lint
+npm run format
+
+# Build for production
+npm run build
+```
+
+### Git Workflow
+```bash
+# Feature development
+git checkout -b feature/new-feature
+git commit -m "feat(scope): description"
+git push origin feature/new-feature
+
+# Create pull request for review
+```
+
+### Docker Development
+```bash
+# Build and test locally
+docker-compose -f docker-compose.dev.yml up
+
+# Production deployment
+docker-compose up -d
+
+# View logs
+docker-compose logs -f calorie-diary
 ```
 
 ## 📚 Documentation
 
-- **[App Explanation](documentation/app-explanation.md)** - Understand how it works, the formulas used, and benefits
-- **[Setup Guide](documentation/setup-guide.md)** - Complete step-by-step installation instructions
-- **[Technical Documentation](documentation/technical-documentation.md)** - Developer guide and script architecture
+Comprehensive documentation is available in the `/documentation` folder:
 
-## 🎯 How It Calculates Your Goals
+- **[User Guide](documentation/user-guide.md)**: Complete end-user documentation
+- **[Technical Architecture](documentation/technical-architecture.md)**: System design and components
+- **[Deployment Guide](documentation/deployment-guide.md)**: Setup and deployment instructions
+- **[Troubleshooting](documentation/troubleshooting.md)**: Common issues and solutions
 
-### 1. Basal Metabolic Rate (BMR)
-Uses the **Mifflin-St Jeor Equation**:
-- **Men**: BMR = (10 × weight) + (6.25 × height) - (5 × age) + 5
-- **Women**: BMR = (10 × weight) + (6.25 × height) - (5 × age) - 161
+## 🔒 Security & Privacy
 
-### 2. Total Daily Energy Expenditure (TDEE)
-Multiplies BMR by your activity factor:
-- 1.2 = Sedentary
-- 1.375 = Lightly active
-- 1.55 = Moderately active
-- 1.725 = Very active
-- 1.9 = Extremely active
+### Data Security
+- **Google Service Account**: Secure API authentication
+- **Environment Variables**: Sensitive data protection
+- **HTTPS Enforced**: Encrypted data transmission
+- **Data Ownership**: Your data stays in your Google account
 
-### 3. Goal Adjustment
-Applies your objective:
-- **Weight Loss**: -500 calories (≈0.5 kg/week)
-- **Maintenance**: 0 calories
-- **Weight Gain**: +500 calories (≈0.5 kg/week)
-
-## 📊 Example Usage
-
-**Your Profile**: 30-year-old male, 175cm, 70kg, moderately active, weight loss goal
-
-**Calculation**:
-- BMR = (10×70) + (6.25×175) - (5×30) + 5 = 1,649 calories
-- TDEE = 1,649 × 1.55 = 2,556 calories  
-- Goal = 2,556 - 500 = **2,056 calories/day**
-
-**Daily Tracking**:
-- Breakfast: 350 cal
-- Lunch: 450 cal  
-- Dinner: 600 cal
-- Snacks: 200 cal
-- **Total**: 1,600 cal
-- **Status**: Under Goal (+456) ✅
-
-## 🛠 Requirements
-
-- Google account with Google Sheets access
-- Basic familiarity with Google Sheets
-- One-time setup (about 10 minutes)
-
-## 🔧 Installation
-
-### Option 1: Quick Setup (Recommended)
-1. Create new Google Sheet with sheets named: `Log`, `Dashboard`, `Daily Summary`
-2. Copy script from `scripts/CaloryDiaryAutomation_v2.gs` to Apps Script editor
-3. Authorize permissions and run "Initialize All"
-4. Enter your personal metrics
-5. Start logging food!
-
-### Option 2: Detailed Setup
-Follow the complete [Setup Guide](documentation/setup-guide.md) for step-by-step instructions with screenshots and troubleshooting.
-
-## 📱 Daily Workflow
-
-1. **Log Your Meals**: Add entries to Log sheet (date, time, meal type, food, calories)
-2. **Check Progress**: Dashboard automatically shows today's status
-3. **Monitor Trends**: Daily Summary sheet tracks historical data
-4. **Adjust Goals**: Update personal metrics anytime - system recalculates everything
-
-## 🔄 Version History
-
-- **v2.0** (Current) - Enhanced automation, better error handling, comprehensive documentation
-- **v1.0** - Initial release with basic functionality
+### Privacy Features
+- **Local Processing**: Calculations performed locally when possible
+- **No Tracking**: No analytics or tracking cookies
+- **Offline Capable**: Works without constant internet connection
+- **Export Ready**: Download your data anytime
 
 ## 🤝 Contributing
 
-This is a personal project, but feel free to:
-- Fork and customize for your needs
-- Report issues or suggest improvements
-- Share your customizations
+We welcome contributions to improve the Calorie Diary application:
+
+### Development Setup
+```bash
+git clone https://github.com/your-username/calorie-diary.git
+cd calorie-diary
+npm install
+cp .env.example .env
+npm run dev
+```
+
+### Contribution Guidelines
+- **Feature Requests**: Open an issue to discuss new features
+- **Bug Reports**: Include steps to reproduce and system information
+- **Code Contributions**: Follow coding standards and include tests
+- **Documentation**: Help improve guides and API documentation
+
+### Code Standards
+- **ESLint**: Code linting for consistency
+- **Prettier**: Code formatting
+- **Jest**: Unit and integration testing
+- **Conventional Commits**: Structured commit messages
 
 ## 📄 License
 
-MIT License - Feel free to use, modify, and distribute as needed.
+This project is open source and available under the MIT License. Feel free to use, modify, and distribute according to the license terms.
 
-## 🆘 Support
+## 🆘 Support & Help
 
-**Having issues?**
-1. Check the [Setup Guide](documentation/setup-guide.md) troubleshooting section
-2. Verify your sheet names match exactly: `Log`, `Dashboard`, `Daily Summary`
-3. Ensure all personal metrics are filled in Dashboard cells H2-H7
-4. Try "Refresh Calculations" from the Calory Diary menu
+### Getting Started
+1. **Quick Setup**: Follow the Quick Start guide above
+2. **Detailed Setup**: Read the [Deployment Guide](documentation/deployment-guide.md)
+3. **User Manual**: Check the [User Guide](documentation/user-guide.md)
+4. **Issues**: See [Troubleshooting](documentation/troubleshooting.md)
 
-**Want to understand how it works?**
-- Read the [App Explanation](documentation/app-explanation.md) for user-friendly details
-- Check [Technical Documentation](documentation/technical-documentation.md) for developer insights
+### Community
+- **Issues**: GitHub Issues for bug reports and feature requests
+- **Discussions**: GitHub Discussions for questions and ideas
+- **Documentation**: Comprehensive guides in the documentation folder
 
 ---
 
-**Start tracking your calories intelligently today! 🎯**
+**🚀 Ready to start your scientific nutrition journey? Deploy the app and begin tracking your health goals with precision and style!** 🍎📊
